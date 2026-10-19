@@ -1,0 +1,392 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floyd-Warshall Visualization</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 25px;
+    color: #1e293b;
+}
+
+.container {
+    max-width: 950px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px #00000012;
+}
+
+h1 {
+    text-align: center;
+    color: #4338ca;
+}
+
+.subtitle {
+    text-align: center;
+    color: #64748b;
+}
+
+.graph {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.node {
+    border: 2px solid #6366f1;
+    border-radius: 50%;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    font-weight: bold;
+}
+
+.edges {
+    text-align: center;
+    color: #475569;
+    margin-bottom: 20px;
+}
+
+.status {
+    background: #eef2ff;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    line-height: 1.6;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 5px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+th {
+    background: #4338ca;
+    color: white;
+    padding: 12px 5px;
+    border-radius: 5px;
+}
+
+td {
+    background: #f1f5f9;
+    padding: 13px 5px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+td.changed {
+    background: #bbf7d0;
+    color: #166534;
+    outline: 2px solid #22c55e;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 22px 0;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+    background: #4f46e5;
+    color: white;
+}
+
+button:hover {
+    background: #3730a3;
+}
+
+button:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.reset {
+    background: #64748b;
+}
+
+.formula {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 17px;
+    overflow-wrap: anywhere;
+}
+
+h2 {
+    color: #4338ca;
+    font-size: 21px;
+}
+
+.footer {
+    color: #64748b;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 25px;
+}
+
+@media (max-width: 500px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 12px;
+    }
+
+    td, th {
+        padding: 10px 3px;
+    }
+
+    button {
+        padding: 10px 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Floyd-Warshall Algorithm</h1>
+    <p class="subtitle">
+        Interactive All-Pairs Shortest Path Visualization
+    </p>
+
+    <h2>Graph Representation</h2>
+
+    <div class="graph">
+        <div class="node">A</div>
+        <div class="node">B</div>
+        <div class="node">C</div>
+        <div class="node">D</div>
+    </div>
+
+    <div class="edges">
+        Edges: A → B (5) | A → D (10) |
+        B → C (3) | C → D (1)
+    </div>
+
+    <h2 id="stageTitle">Initial Distance Matrix</h2>
+
+    <div class="status">
+        <strong>Intermediate Vertex:</strong>
+        <span id="vertex">None</span>
+        <br>
+        <strong>Explanation:</strong>
+        <span id="explanation">
+            Start with the direct distances between vertices.
+        </span>
+    </div>
+
+    <table id="matrix"></table>
+
+    <h2>Floyd-Warshall Formula</h2>
+
+    <div class="formula">
+        D[i][j] = min(D[i][j], D[i][k] + D[k][j])
+    </div>
+
+    <div class="controls">
+        <button id="prev" onclick="previousStep()">
+            ← Previous
+        </button>
+
+        <button id="next" onclick="nextStep()">
+            Next Step →
+        </button>
+
+        <button class="reset" onclick="resetAlgorithm()">
+            Reset
+        </button>
+    </div>
+
+    <div class="status">
+        <strong>Current Iteration:</strong>
+        <span id="counter">0 / 4</span>
+        <br>
+        Green cells indicate distances that changed in the
+        latest iteration.
+    </div>
+
+    <h2>Final Result</h2>
+    <p>
+        The final matrix gives the shortest distance between
+        every pair of vertices.
+    </p>
+
+    <div class="footer">
+        Floyd-Warshall Algorithm | All-Pairs Shortest Paths
+    </div>
+
+</div>
+
+<script>
+const INF = Infinity;
+const vertices = ["A", "B", "C", "D"];
+
+const initialMatrix = [
+    [0,   5,   INF, 10],
+    [INF, 0,   3,   INF],
+    [INF, INF, 0,   1],
+    [INF, INF, INF, 0]
+];
+
+let history = [];
+let currentStep = 0;
+
+// Calculate and store every matrix iteration
+function calculateFloydWarshall() {
+    let dist = initialMatrix.map(row => [...row]);
+
+    history = [{
+        matrix: dist.map(row => [...row]),
+        vertex: "None",
+        title: "Initial Distance Matrix",
+        explanation:
+            "Start with direct edge weights. Infinity means no known direct path."
+    }];
+
+    for (let k = 0; k < vertices.length; k++) {
+
+        for (let i = 0; i < vertices.length; i++) {
+            for (let j = 0; j < vertices.length; j++) {
+
+                if (
+                    dist[i][k] !== INF &&
+                    dist[k][j] !== INF
+                ) {
+                    const newDistance =
+                        dist[i][k] + dist[k][j];
+
+                    if (newDistance < dist[i][j]) {
+                        dist[i][j] = newDistance;
+                    }
+                }
+            }
+        }
+
+        const explanations = [
+            "Check paths through A. No distances improve.",
+            "Through B, A → B → C costs 5 + 3 = 8. A → C improves from infinity to 8.",
+            "Through C, A → D improves to 9 and B → D improves to 4.",
+            "Through D, no more distances improve. The final matrix is ready."
+        ];
+
+        history.push({
+            matrix: dist.map(row => [...row]),
+            vertex: vertices[k] + " (k = " + k + ")",
+            title: "Iteration " + (k + 1),
+            explanation: explanations[k]
+        });
+    }
+}
+
+// Display current matrix
+function displayMatrix() {
+    const current = history[currentStep];
+    const previous = currentStep > 0
+        ? history[currentStep - 1].matrix
+        : null;
+
+    document.getElementById("stageTitle").textContent =
+        current.title;
+
+    document.getElementById("vertex").textContent =
+        current.vertex;
+
+    document.getElementById("explanation").textContent =
+        current.explanation;
+
+    document.getElementById("counter").textContent =
+        currentStep + " / " + (history.length - 1);
+
+    let html = "<tr><th>From / To</th>";
+
+    vertices.forEach(vertex => {
+        html += "<th>" + vertex + "</th>";
+    });
+
+    html += "</tr>";
+
+    current.matrix.forEach((row, i) => {
+        html += "<tr><th>" + vertices[i] + "</th>";
+
+        row.forEach((value, j) => {
+            const changed = previous &&
+                value !== previous[i][j];
+
+            const displayValue =
+                value === INF ? "∞" : value;
+
+            html += "<td class='" +
+                (changed ? "changed" : "") +
+                "'>" + displayValue + "</td>";
+        });
+
+        html += "</tr>";
+    });
+
+    document.getElementById("matrix").innerHTML = html;
+
+    document.getElementById("prev").disabled =
+        currentStep === 0;
+
+    document.getElementById("next").disabled =
+        currentStep === history.length - 1;
+}
+
+function nextStep() {
+    if (currentStep < history.length - 1) {
+        currentStep++;
+        displayMatrix();
+    }
+}
+
+function previousStep() {
+    if (currentStep > 0) {
+        currentStep--;
+        displayMatrix();
+    }
+}
+
+function resetAlgorithm() {
+    currentStep = 0;
+    displayMatrix();
+}
+
+calculateFloydWarshall();
+displayMatrix();
+</script>
+
+</body>
+</html>
