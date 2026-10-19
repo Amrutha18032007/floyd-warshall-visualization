@@ -1,0 +1,30 @@
+PROJECT TITLE: All-Pairs Shortest Path Matrix Update Using Floyd–Warshall Algorithm
+
+PROMPT:
+
+Create an interactive web-based visualization of the Floyd–Warshall algorithm to demonstrate the step-by-step updates of the all-pairs shortest-path distance matrix.
+
+Requirements:
+
+1. Use HTML, CSS, and JavaScript to develop the visualization.
+2. Display a weighted directed graph with four vertices: A, B, C, and D.
+3. Initialize the distance matrix using the direct edge weights. Represent unreachable vertices using infinity (∞).
+4. Implement the Floyd–Warshall algorithm using the formula:
+
+   D[i][j] = min(D[i][j], D[i][k] + D[k][j])
+
+5. Display the distance matrix at every iteration of the algorithm.
+6. Provide interactive Previous, Next Step, and Reset buttons to navigate through the iterations.
+7. Highlight updated distance values in green so users can easily identify changes.
+8. Display the current intermediate vertex, iteration number, and a brief explanation of each update.
+9. Show the final all-pairs shortest-distance matrix after all iterations are completed.
+10. Create a clean, responsive, and user-friendly interface.
+11. Ensure that the project runs directly in a web browser without requiring additional libraries or frameworks.
+
+EXPECTED OUTCOME:
+
+An interactive visualization that helps students understand how the Floyd–Warshall algorithm finds the shortest distances between every pair of vertices by considering intermediate vertices one at a time.
+
+TECHNOLOGIES:
+
+HTML5, CSS3, JavaScript, Visual Studio Code, Git, and GitHub.
